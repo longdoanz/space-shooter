@@ -248,8 +248,6 @@ function drawPlayer(ctx) {
   bodyGrad.addColorStop(0.35, color);
   bodyGrad.addColorStop(1, accentColor);
   ctx.fillStyle = bodyGrad;
-  ctx.shadowBlur  = 16;
-  ctx.shadowColor = color;
 
   ctx.beginPath();
   ctx.moveTo(cx, y);
@@ -279,8 +277,6 @@ function drawPlayer(ctx) {
   ctx.beginPath();
   ctx.ellipse(cx, y + height * 0.35, 5, 7, 0, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-  ctx.shadowBlur  = 8;
-  ctx.shadowColor = '#ffffff';
   ctx.fill();
 
   // Wing weapon pods for Lv 3+
@@ -294,10 +290,8 @@ function drawPlayer(ctx) {
   if (player.shieldActive) {
     ctx.beginPath();
     ctx.arc(cx, cy, player.width * 0.85, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(0, 255, 230, ${0.5 + 0.3 * Math.sin(Date.now() / 150)})`;
-    ctx.lineWidth = 3.5;
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = '#00ffc8';
+    ctx.strokeStyle = '#00ffff';
+    ctx.lineWidth = 3;
     ctx.stroke();
   }
 

@@ -467,8 +467,6 @@ function drawHUD() {
   ctx.save();
   ctx.font = '11px "Press Start 2P"';
   ctx.fillStyle = '#00eaff';
-  ctx.shadowBlur = 6;
-  ctx.shadowColor = '#00eaff';
   ctx.textAlign = 'left';
   ctx.fillText(`SCORE: ${score}`, pad, 24);
 
@@ -479,7 +477,6 @@ function drawHUD() {
   // Lives (❤️)
   ctx.font = '12px "Press Start 2P"';
   ctx.fillStyle = '#ff4466';
-  ctx.shadowColor = '#ff4466';
   let livesText = '';
   for (let i = 0; i < lives; i++) livesText += '♥ ';
   ctx.fillText(livesText, pad, 60);
@@ -487,7 +484,6 @@ function drawHUD() {
   // Active Signature Weapon Badge & Level Stars
   ctx.font = '8px "Press Start 2P"';
   ctx.fillStyle = wProfile.color;
-  ctx.shadowColor = wProfile.color;
   let starsText = '';
   for (let s = 0; s < player.weaponLevel; s++) starsText += '★';
   ctx.fillText(`${wProfile.icon} ${wProfile.name} LV.${player.weaponLevel} ${starsText}`, pad, 78);
@@ -495,7 +491,6 @@ function drawHUD() {
   // Level & Wave Info
   ctx.font = '10px "Press Start 2P"';
   ctx.fillStyle = levelConfig ? levelConfig.color : '#ffdd00';
-  ctx.shadowColor = ctx.fillStyle;
   const totalWaves = levelConfig ? levelConfig.waves.length : 3;
   const waveText = boss && boss.active ? '👑 BOSS BATTLE' : `LVL ${currentLevel} • W${currentWaveIndex + 1}/${totalWaves}`;
   ctx.textAlign = 'right';
@@ -509,13 +504,11 @@ function drawHUD() {
 
   if (player.shieldActive) {
     ctx.fillStyle = '#00ffc8';
-    ctx.shadowColor = '#00ffc8';
     ctx.fillText(`🛡️ SHIELD ${Math.ceil(player.shieldTimer/60)}s`, powerBarX, powerBarY);
     powerBarX += 115;
   }
   if (player.speedBoostTimer > 0) {
     ctx.fillStyle = '#ffaa00';
-    ctx.shadowColor = '#ffaa00';
     ctx.fillText(`⚡ SPEED ${Math.ceil(player.speedBoostTimer/60)}s`, powerBarX, powerBarY);
   }
 
@@ -526,8 +519,6 @@ function drawHUD() {
     ctx.globalAlpha = alpha;
 
     ctx.fillStyle = bannerColor;
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = bannerColor;
     ctx.font = '16px "Press Start 2P"';
     ctx.textAlign = 'center';
     ctx.fillText(bannerText, canvas.width / 2, canvas.height * 0.38);

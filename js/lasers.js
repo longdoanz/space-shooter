@@ -1,5 +1,6 @@
 /* =====================================================
    🔫 LASERS & WEAPONS SYSTEM (js/lasers.js)
+   🚀 High-Performance Optimized (No costly shadowBlur lag!)
    5 Signature Player Weapon Archetypes:
    - 🚀 Plasma Vulcan (Multi-spread rapid machinegun)
    - ⚡ Tesla Lightning (Auto-seeking electric bolts)
@@ -11,6 +12,7 @@
 'use strict';
 
 let lasers = [];
+const MAX_LASERS = 50; // Cap to prevent any projectile buildup
 
 function makePlayerLaser(x, y, speedX, speedY, archetype, damage, color, extra = {}) {
   return {
@@ -22,16 +24,17 @@ function makePlayerLaser(x, y, speedX, speedY, archetype, damage, color, extra =
     speedY: speedY,
     color: color,
     fromPlayer: true,
-    archetype: archetype, // 'plasma' | 'homing' | 'explosive' | 'piercing' | 'vortex'
+    archetype: archetype,
     damage: damage,
     pierceCount: extra.pierceCount || 1,
     radius: extra.radius || 3,
     aoeRadius: extra.aoeRadius || 0,
     target: null,
+    targetSearchTimer: 0,
     angle: 0,
-    spinSpeed: extra.spinSpeed || 0.2,
+    spinSpeed: extra.spinSpeed || 0.25,
     isReturning: false,
-    life: extra.life || 140,
+    life: extra.life || 110,
   };
 }
 
@@ -45,32 +48,41 @@ function makeEnemyLaser(x, y, speedX, speedY, color = '#ff3344', size = 1, type 
     speedY: speedY,
     color: color,
     fromPlayer: false,
-    type: type, // 'standard' | 'cluster' | 'sniper'
-    fuse: type === 'cluster' ? 60 : 0,
+    type: type,
+    fuse: type === 'cluster' ? 55 : 0,
   };
 }
 
 // ─────────────────────────────────────────────────────
-//  Update Lasers & Projectile Physics
+//  Update Lasers (Optimized Homing & Smooth Boomerang)
 // ─────────────────────────────────────────────────────
 function updateLasers(canvasWidth, canvasHeight, enemiesList = [], bossRef = null, playerX = 0, playerY = 0) {
+  // Cap active bullets if needed
+  if (lasers.length > MAX_LASERS) {
+    lasers.splice(0, lasers.length - MAX_LASERS);
+  }
+
   for (let i = lasers.length - 1; i >= 0; i--) {
     const laser = lasers[i];
 
-    // ⚡ Tesla Lightning Auto-Seeking
+    // ⚡ Tesla Lightning: Optimized Homing (re-target every 4 frames)
     if (laser.fromPlayer && laser.archetype === 'homing') {
-      if (!laser.target || laser.target.hp <= 0 || laser.target.isDying) {
+      laser.targetSearchTimer = (laser.targetSearchTimer || 0) + 1;
+      if (laser.targetSearchTimer % 4 === 0 || !laser.target || laser.target.hp <= 0) {
         let nearestDist = 999999;
         let bestTarget = null;
 
         if (bossRef && bossRef.active && !bossRef.isDying) {
           bestTarget = bossRef;
         } else {
-          for (const enemy of enemiesList) {
+          for (let eIdx = 0; eIdx < enemiesList.length; eIdx++) {
+            const enemy = enemiesList[eIdx];
             if (enemy.hp > 0) {
-              const dist = Math.hypot(enemy.x + enemy.width / 2 - laser.x, enemy.y + enemy.height / 2 - laser.y);
-              if (dist < nearestDist) {
-                nearestDist = dist;
+              const dx = (enemy.x + enemy.width / 2) - laser.x;
+              const dy = (enemy.y + enemy.height / 2) - laser.y;
+              const distSq = dx * dx + dy * dy;
+              if (distSq < nearestDist) {
+                nearestDist = distSq;
                 bestTarget = enemy;
               }
             }
@@ -83,24 +95,35 @@ function updateLasers(canvasWidth, canvasHeight, enemiesList = [], bossRef = nul
         const tx = laser.target.x + (laser.target.width || 40) / 2;
         const ty = laser.target.y + (laser.target.height || 40) / 2;
         const angle = Math.atan2(ty - laser.y, tx - laser.x);
-        const steerSpeed = 10;
-        laser.speedX = laser.speedX * 0.8 + Math.cos(angle) * steerSpeed * 0.2;
-        laser.speedY = laser.speedY * 0.8 + Math.sin(angle) * steerSpeed * 0.2;
+        laser.speedX = laser.speedX * 0.78 + Math.cos(angle) * 2.8;
+        laser.speedY = laser.speedY * 0.78 + Math.sin(angle) * 2.8;
       }
     }
 
-    // 🌀 Vortex Blade Boomerang Physics
+    // 🌀 Vortex Blade: Smooth Boomerang Fallback Physics
     if (laser.fromPlayer && laser.archetype === 'vortex') {
       laser.angle += laser.spinSpeed;
       laser.life--;
-      if (laser.y < 90 && !laser.isReturning) {
+
+      if (laser.y < 80 && !laser.isReturning) {
         laser.isReturning = true;
       }
+
       if (laser.isReturning) {
-        // Curve and return toward player!
-        const angleToPlayer = Math.atan2(playerY - laser.y, playerX - laser.x);
-        laser.speedX = laser.speedX * 0.9 + Math.cos(angleToPlayer) * 7.5 * 0.1;
-        laser.speedY = laser.speedY * 0.9 + Math.sin(angleToPlayer) * 7.5 * 0.1;
+        // Curve smoothly back down towards player
+        const dx = playerX - laser.x;
+        const dy = playerY - laser.y;
+        const distToPlayer = Math.hypot(dx, dy);
+
+        // Despawn cleanly when returning close to player or reaching bottom
+        if (distToPlayer < 35 || laser.y > canvasHeight - 20) {
+          lasers.splice(i, 1);
+          continue;
+        }
+
+        const angleToPlayer = Math.atan2(dy, dx);
+        laser.speedX = laser.speedX * 0.88 + Math.cos(angleToPlayer) * 1.5;
+        laser.speedY = laser.speedY * 0.88 + Math.sin(angleToPlayer) * 1.5;
       }
     }
 
@@ -111,121 +134,103 @@ function updateLasers(canvasWidth, canvasHeight, enemiesList = [], bossRef = nul
     if (laser.type === 'cluster') {
       laser.fuse--;
       if (laser.fuse <= 0) {
-        createExplosion(laser.x, laser.y, '#ff4400', 12);
+        createExplosion(laser.x, laser.y, '#ff4400', 8);
         playSound('explosion');
-        lasers.push(makeEnemyLaser(laser.x, laser.y, -1.8, 4.0, '#ffaa00', 0.8, 'standard'));
-        lasers.push(makeEnemyLaser(laser.x, laser.y,  0,   4.5, '#ffaa00', 0.8, 'standard'));
-        lasers.push(makeEnemyLaser(laser.x, laser.y,  1.8, 4.0, '#ffaa00', 0.8, 'standard'));
+        lasers.push(makeEnemyLaser(laser.x, laser.y, -1.6, 3.8, '#ffaa00', 0.8, 'standard'));
+        lasers.push(makeEnemyLaser(laser.x, laser.y,  0,   4.2, '#ffaa00', 0.8, 'standard'));
+        lasers.push(makeEnemyLaser(laser.x, laser.y,  1.6, 3.8, '#ffaa00', 0.8, 'standard'));
         lasers.splice(i, 1);
         continue;
       }
     }
 
-    // Cleanup off screen
-    if (laser.y < -50 || laser.y > canvasHeight + 50 || laser.x < -50 || laser.x > canvasWidth + 50 || laser.life <= 0) {
+    // Boundary & lifetime cleanup
+    if (laser.y < -40 || laser.y > canvasHeight + 40 || laser.x < -40 || laser.x > canvasWidth + 40 || laser.life <= 0) {
       lasers.splice(i, 1);
     }
   }
 }
 
 // ─────────────────────────────────────────────────────
-//  Draw Lasers with Unique Visual Identities
+//  Draw Lasers (High-Performance Vector Graphics)
 // ─────────────────────────────────────────────────────
 function drawLasers(ctx) {
-  for (const laser of lasers) {
-    ctx.save();
-    ctx.shadowBlur  = 14;
-    ctx.shadowColor = laser.color;
+  for (let i = 0; i < lasers.length; i++) {
+    const laser = lasers[i];
 
     if (laser.fromPlayer) {
       if (laser.archetype === 'plasma') {
-        // High-velocity plasma slug
-        const grad = ctx.createLinearGradient(laser.x, laser.y, laser.x, laser.y + laser.height);
-        grad.addColorStop(0, '#ffffff');
-        grad.addColorStop(0.35, laser.color);
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.roundRect(laser.x - laser.width / 2, laser.y, laser.width, laser.height, laser.width / 2);
-        ctx.fill();
+        // Crisp dual-tone plasma bullet
+        ctx.fillStyle = laser.color;
+        ctx.fillRect(laser.x - laser.width / 2, laser.y, laser.width, laser.height);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(laser.x - laser.width / 4, laser.y + 2, laser.width / 2, laser.height - 4);
       } 
       else if (laser.archetype === 'homing') {
-        // Tesla Lightning orb with crackling corona
+        // Tesla Lightning orb with outer halo
         ctx.beginPath();
-        ctx.arc(laser.x, laser.y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
+        ctx.arc(laser.x, laser.y, 7, 0, Math.PI * 2);
+        ctx.fillStyle = laser.color;
         ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(laser.x, laser.y, 9, 0, Math.PI * 2);
-        ctx.strokeStyle = laser.color;
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
+        ctx.arc(laser.x, laser.y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
       }
       else if (laser.archetype === 'explosive') {
-        // Antimatter Missile / Heavy explosive sphere
+        // Heavy explosive projectile
         ctx.beginPath();
         ctx.arc(laser.x, laser.y, laser.radius || 7, 0, Math.PI * 2);
-        const radGrad = ctx.createRadialGradient(laser.x, laser.y, 1, laser.x, laser.y, laser.radius || 7);
-        radGrad.addColorStop(0, '#ffffff');
-        radGrad.addColorStop(0.5, laser.color);
-        radGrad.addColorStop(1, '#ff8800');
-        ctx.fillStyle = radGrad;
+        ctx.fillStyle = laser.color;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(laser.x, laser.y, (laser.radius || 7) * 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
         ctx.fill();
       }
       else if (laser.archetype === 'piercing') {
-        // Piercing Quantum Prism Death Ray
+        // Quantum Prism Laser Beam
+        ctx.fillStyle = laser.color;
+        ctx.fillRect(laser.x - laser.width / 2, laser.y, laser.width, laser.height);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(laser.x - laser.width / 2 + 1, laser.y, laser.width - 2, laser.height);
-        ctx.strokeStyle = laser.color;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(laser.x - laser.width / 2, laser.y, laser.width, laser.height);
+        ctx.fillRect(laser.x - laser.width / 4, laser.y, laser.width / 2, laser.height);
       }
       else if (laser.archetype === 'vortex') {
-        // 🌀 Spinning Emerald Blade
+        // 🌀 Fast Spinning Vortex Disc
+        ctx.save();
         ctx.translate(laser.x, laser.y);
         ctx.rotate(laser.angle || 0);
 
         ctx.fillStyle = laser.color;
         ctx.beginPath();
-        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.arc(0, 0, 7, 0, Math.PI * 2);
         ctx.fill();
 
-        // 4 Blade points
-        for (let b = 0; b < 4; b++) {
-          ctx.rotate(Math.PI / 2);
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.moveTo(0, -12);
-          ctx.lineTo(4, -4);
-          ctx.lineTo(-4, -4);
-          ctx.closePath();
-          ctx.fill();
-        }
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-9, -2, 18, 4);
+        ctx.fillRect(-2, -9, 4, 18);
+        ctx.restore();
       }
     } 
     else {
-      // Enemy Lasers
+      // Enemy Bullets
       if (laser.type === 'cluster') {
         ctx.beginPath();
-        ctx.arc(laser.x, laser.y, 7, 0, Math.PI * 2);
+        ctx.arc(laser.x, laser.y, 6, 0, Math.PI * 2);
         ctx.fillStyle = '#ff2200';
         ctx.fill();
-        ctx.strokeStyle = '#ffff00';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      } else {
-        const grad = ctx.createLinearGradient(laser.x, laser.y, laser.x, laser.y + laser.height);
-        grad.addColorStop(0, '#ffffff');
-        grad.addColorStop(0.4, laser.color);
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.roundRect(laser.x - laser.width / 2, laser.y, laser.width, laser.height, laser.width / 2);
+        ctx.arc(laser.x, laser.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffff00';
         ctx.fill();
+      } else {
+        ctx.fillStyle = laser.color;
+        ctx.fillRect(laser.x - laser.width / 2, laser.y, laser.width, laser.height);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(laser.x - laser.width / 4, laser.y + 2, laser.width / 2, laser.height - 4);
       }
     }
-
-    ctx.restore();
   }
 }

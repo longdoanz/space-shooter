@@ -271,9 +271,6 @@ function drawEnemies(ctx) {
       ctx.globalAlpha = enemy.cloakAlpha;
     }
 
-    ctx.shadowBlur  = 12;
-    ctx.shadowColor = enemy.color;
-
     if (enemy.type === 'scout') {
       ctx.fillStyle = enemy.color;
       ctx.beginPath();

@@ -75,9 +75,6 @@ function drawPowerups(ctx) {
     const cx = p.x + p.width / 2;
     const cy = p.y + p.height / 2 + Math.sin(p.bobTimer) * 3;
 
-    ctx.shadowBlur = 16;
-    ctx.shadowColor = p.color;
-
     // Glowing Pill / Capsule
     ctx.beginPath();
     ctx.arc(cx, cy, 15, 0, Math.PI * 2);

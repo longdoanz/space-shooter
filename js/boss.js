@@ -244,19 +244,10 @@ function drawBoss(ctx, canvasWidth) {
 
   ctx.save();
 
-  // Enraged Aura
-  if (phase === 3) {
-    ctx.shadowBlur = 25;
-    ctx.shadowColor = '#ff0033';
-  } else {
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = color;
-  }
-
   // Outer Armor Hull
   ctx.fillStyle = phase === 3 ? '#550015' : '#140026';
   ctx.strokeStyle = phase === 3 ? '#ff0033' : color;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = phase === 3 ? 4 : 3;
 
   ctx.beginPath();
   ctx.moveTo(cx, y + height);
