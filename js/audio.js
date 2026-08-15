@@ -11,7 +11,6 @@ let musicInterval = null;
 let isMusicMuted = false;
 let musicStep = 0;
 
-// Initialize or resume the Web Audio context on user interaction
 function getAudioContext() {
   if (!audioCtx) {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -29,20 +28,86 @@ function getAudioContext() {
 //  Sound Effects (SFX)
 // ─────────────────────────────────────────────────────
 function playSound(type) {
-  if (isMusicMuted && type !== 'laser') return; // Allow basic feedback or check mute
+  if (isMusicMuted && !type.startsWith('laser')) return;
 
   try {
     const actx = getAudioContext();
     if (!actx) return;
     const now = actx.currentTime;
 
-    if (type === 'laser') {
-      // 🔫 Player Laser: Quick high-to-low pitch sweep
+    if (type === 'laser' || type === 'laser_plasma') {
+      // 🚀 Plasma Vulcan: Crisp rapid laser pop
       const osc = actx.createOscillator();
       const gain = actx.createGain();
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(880, now);
-      osc.frequency.exponentialRampToValueAtTime(110, now + 0.12);
+      osc.frequency.exponentialRampToValueAtTime(120, now + 0.1);
+
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+
+      osc.connect(gain);
+      gain.connect(actx.destination);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    }
+    else if (type === 'laser_lightning') {
+      // ⚡ Tesla Lightning: Electric buzz / crackle
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.setValueAtTime(450, now + 0.03);
+      osc.frequency.setValueAtTime(900, now + 0.06);
+      osc.frequency.exponentialRampToValueAtTime(150, now + 0.12);
+
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+
+      osc.connect(gain);
+      gain.connect(actx.destination);
+      osc.start(now);
+      osc.stop(now + 0.12);
+    }
+    else if (type === 'laser_rocket') {
+      // 💥 Heavy Rocket Launch: Low-frequency whoosh thud
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(240, now);
+      osc.frequency.exponentialRampToValueAtTime(45, now + 0.16);
+
+      gain.gain.setValueAtTime(0.26, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
+
+      osc.connect(gain);
+      gain.connect(actx.destination);
+      osc.start(now);
+      osc.stop(now + 0.16);
+    }
+    else if (type === 'laser_quantum') {
+      // 🔮 Quantum Beam: Vibrating high-energy prism hum
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1400, now);
+      osc.frequency.linearRampToValueAtTime(700, now + 0.14);
+
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+
+      osc.connect(gain);
+      gain.connect(actx.destination);
+      osc.start(now);
+      osc.stop(now + 0.14);
+    }
+    else if (type === 'laser_vortex') {
+      // 🌀 Vortex Blade: Whirring resonant blade slice
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.12);
 
       gain.gain.setValueAtTime(0.18, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
@@ -51,9 +116,25 @@ function playSound(type) {
       gain.connect(actx.destination);
       osc.start(now);
       osc.stop(now + 0.12);
-    } 
+    }
+    else if (type === 'weapon_switch') {
+      // 🌟 Weapon Signature Switch Fanfare!
+      [523.25, 783.99, 1046.5].forEach((f, i) => {
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(f, now + i * 0.05);
+
+        gain.gain.setValueAtTime(0.22, now + i * 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.05 + 0.12);
+
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        osc.start(now + i * 0.05);
+        osc.stop(now + i * 0.05 + 0.12);
+      });
+    }
     else if (type === 'enemyLaser') {
-      // 👾 Enemy Laser: Lower raspy pulse
       const osc = actx.createOscillator();
       const gain = actx.createGain();
       osc.type = 'square';
@@ -69,7 +150,6 @@ function playSound(type) {
       osc.stop(now + 0.15);
     }
     else if (type === 'bossLaser') {
-      // 👑 Boss Heavy Blast: Deep rumbling energy beam
       const osc = actx.createOscillator();
       const gain = actx.createGain();
       osc.type = 'sawtooth';
@@ -85,7 +165,6 @@ function playSound(type) {
       osc.stop(now + 0.3);
     }
     else if (type === 'explosion') {
-      // 💥 Explosion: White noise crunch
       const bufferSize = actx.sampleRate * 0.25;
       const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
       const data = buffer.getChannelData(0);
@@ -111,7 +190,6 @@ function playSound(type) {
       noise.start(now);
     }
     else if (type === 'bossExplosion') {
-      // 🌋 Giant Boss Super-Explosion
       const bufferSize = actx.sampleRate * 0.6;
       const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
       const data = buffer.getChannelData(0);
@@ -152,7 +230,6 @@ function playSound(type) {
       osc.stop(now + 0.1);
     }
     else if (type === 'powerup') {
-      // ⭐ Power-up: Cheerful rising arpeggio
       const freqs = [523.25, 659.25, 783.99, 1046.5];
       freqs.forEach((f, i) => {
         const osc = actx.createOscillator();
@@ -170,7 +247,6 @@ function playSound(type) {
       });
     }
     else if (type === 'waveClear') {
-      // 🎺 Wave Clear Fanfare
       const fanfare = [440, 554.37, 659.25, 880];
       fanfare.forEach((f, i) => {
         const osc = actx.createOscillator();
@@ -188,7 +264,6 @@ function playSound(type) {
       });
     }
     else if (type === 'bossWarning') {
-      // ⚠️ Ominous Boss Klaxon Siren
       [220, 293.66, 220, 293.66].forEach((f, i) => {
         const osc = actx.createOscillator();
         const gain = actx.createGain();
@@ -205,7 +280,6 @@ function playSound(type) {
       });
     }
     else if (type === 'victory') {
-      // 🏆 Grand Victory Fanfare!
       const victoryNotes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
       victoryNotes.forEach((f, i) => {
         const osc = actx.createOscillator();
@@ -222,15 +296,11 @@ function playSound(type) {
         osc.stop(now + i * 0.12 + 0.35);
       });
     }
-  } catch (err) {
-    // Audio safe fallback
-  }
+  } catch (err) {}
 }
 
 // ─────────────────────────────────────────────────────
 //  8-bit Retro Background Music Loop
-//  🧠 LEARNING: A synthesizer sequence creates an arcade
-//     bassline by playing notes on a rhythmic timer!
 // ─────────────────────────────────────────────────────
 const BASSLINE = [110, 110, 146.83, 146.83, 130.81, 130.81, 164.81, 146.83];
 const LEAD_MELODY = [220, 0, 261.63, 293.66, 329.63, 0, 293.66, 261.63];
@@ -247,7 +317,6 @@ function startBackgroundMusic() {
       if (!actx) return;
       const now = actx.currentTime;
 
-      // 1. Play Bass Note
       const bassFreq = BASSLINE[musicStep % BASSLINE.length];
       if (bassFreq > 0) {
         const osc = actx.createOscillator();
@@ -264,7 +333,6 @@ function startBackgroundMusic() {
         osc.stop(now + 0.18);
       }
 
-      // 2. Play Lead Melody Note
       const leadFreq = LEAD_MELODY[musicStep % LEAD_MELODY.length];
       if (leadFreq > 0 && Math.random() > 0.2) {
         const osc = actx.createOscillator();
@@ -283,7 +351,7 @@ function startBackgroundMusic() {
 
       musicStep++;
     } catch (e) {}
-  }, 190); // ~158 BPM retro tempo
+  }, 190);
 }
 
 function stopBackgroundMusic() {

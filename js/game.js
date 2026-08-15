@@ -1,7 +1,7 @@
 /* =====================================================
    🚀 MASTER GAME CONTROLLER (js/game.js)
-   Orchestrates Multi-Level Campaigns, Bosses per Level,
-   Weapon Upgrades/Downgrades, Ship Classes & Collisions!
+   Orchestrates Campaigns, Bosses per Level, Signature
+   Weapons, Dynamic Rewards, Collisions & High Scores!
    ===================================================== */
 
 'use strict';
@@ -60,7 +60,7 @@ function updateHighScore() {
 }
 
 // ─────────────────────────────────────────────────────
-//  Input Handling & Ship Class Selection
+//  Input Handling & Ship Selection
 // ─────────────────────────────────────────────────────
 const keys = {};
 
@@ -101,7 +101,7 @@ bindMobileBtn('btnLeft',  'ArrowLeft');
 bindMobileBtn('btnRight', 'ArrowRight');
 bindMobileBtn('btnShoot', 'Space');
 
-// Character / Ship Class Picker Buttons
+// Character Selection Cards
 document.querySelectorAll('.ship-card').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.ship-card').forEach(b => b.classList.remove('active'));
@@ -122,7 +122,6 @@ document.getElementById('restartBtn').addEventListener('click', () => {
 });
 document.getElementById('victoryBtn').addEventListener('click', () => {
   getAudioContext();
-  // Continue into Endless / New Game+ Mode!
   currentLevel++;
   document.getElementById('victory-screen').classList.add('hidden');
   initGame(currentLevel);
@@ -178,13 +177,11 @@ function startWave(waveIdx) {
   if (!waveData) return;
 
   if (waveData.isBoss) {
-    // 👑 Boss Battle for this level!
     playSound('bossWarning');
     showBanner(`👑 LEVEL ${currentLevel} BOSS!`, waveData.title, '#ff0033', 140);
     triggerScreenShake(12, 30);
     spawnBoss(canvas.width, currentLevel);
   } else {
-    // Standard wave
     showBanner(`WAVE ${currentWaveIndex + 1}/${levelConfig.waves.length}`, waveData.title, levelConfig.color, 90);
     queueFormation(waveData, canvas.width, levelConfig);
   }
@@ -230,7 +227,6 @@ function advanceToNextLevel() {
   showBanner(`SECTOR ${currentLevel - 1} CLEARED!`, `ENTERING ${levelConfig.name} (+${levelBonus} PTS)`, levelConfig.color, 140);
   triggerScreenShake(8, 20);
 
-  // Extra life bonus on clearing sector
   lives = Math.min(5, lives + 1);
 
   setTimeout(() => {
@@ -241,7 +237,7 @@ function advanceToNextLevel() {
 }
 
 // ─────────────────────────────────────────────────────
-//  Advanced Collision Detection
+//  Collision Detection & Signature AoE Physics
 // ─────────────────────────────────────────────────────
 function checkRectCollision(rect1, rect2) {
   return (
@@ -255,9 +251,8 @@ function checkRectCollision(rect1, rect2) {
 function applyAoEDamage(x, y, radius, damage) {
   createExplosion(x, y, '#ff4400', 25);
   playSound('explosion');
-  triggerScreenShake(5, 10);
+  triggerScreenShake(6, 12);
 
-  // Damage regular enemies in radius
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
     const dist = Math.hypot((e.x + e.width / 2) - x, (e.y + e.height / 2) - y);
@@ -273,7 +268,6 @@ function applyAoEDamage(x, y, radius, damage) {
     }
   }
 
-  // Damage boss in radius
   if (boss && boss.active && !boss.isDying) {
     const dist = Math.hypot((boss.x + boss.width / 2) - x, (boss.y + boss.height / 2) - y);
     if (dist <= radius + (boss.width / 2)) {
@@ -295,7 +289,7 @@ function handleCollisions() {
       if (checkRectCollision(laserBox, enemy)) {
         createExplosion(laser.x, laser.y, laser.color, 6);
 
-        // Explosive Cannon AoE
+        // AoE Rocket Explosion
         if (laser.aoeRadius > 0) {
           applyAoEDamage(laser.x, laser.y, laser.aoeRadius, laser.damage);
           lasers.splice(lIdx, 1);
@@ -305,7 +299,7 @@ function handleCollisions() {
         // Direct damage
         enemy.hp -= laser.damage || 1;
 
-        // Piercing laser logic
+        // Piercing / Vortex razor logic
         if (laser.pierceCount && laser.pierceCount > 1) {
           laser.pierceCount--;
         } else {
@@ -387,18 +381,16 @@ function handleCollisions() {
     }
   }
 
-  // 6. Power-Up & Capsule Collection
+  // 6. In-Game Reward & Capsule Collection
   for (let pIdx = powerups.length - 1; pIdx >= 0; pIdx--) {
     const p = powerups[pIdx];
     if (checkRectCollision(player, p)) {
-      if (p.type === 'weapon') {
+      if (p.isWeapon && p.weaponType) {
+        // Switch Weapon signature!
+        switchPlayerWeapon(p.weaponType);
+      } else if (p.type === 'upgrade') {
+        // Upgrade weapon level
         upgradePlayerWeapon();
-      } else if (p.type === 'class') {
-        // Cycle to next character class
-        const currentIdx = SHIP_CLASSES.findIndex(c => c.id === player.shipClass);
-        const nextCls = SHIP_CLASSES[(currentIdx + 1) % SHIP_CLASSES.length];
-        switchPlayerClass(nextCls.id);
-        playSound('powerup');
       } else if (p.type === 'shield') {
         player.shieldActive = true;
         player.shieldTimer = 600;
@@ -433,7 +425,7 @@ function damagePlayer() {
     return;
   }
 
-  // 💔 Take real damage & DOWNGRADE weapon level by 1!
+  // Lose a heart & downgrade weapon level by 1!
   lives--;
   downgradePlayerWeapon();
   playSound('explosion');
@@ -470,6 +462,7 @@ function triggerVictory() {
 // ─────────────────────────────────────────────────────
 function drawHUD() {
   const pad = 14;
+  const wProfile = getWeaponProfile(player.weaponType);
 
   ctx.save();
   ctx.font = '11px "Press Start 2P"';
@@ -491,15 +484,15 @@ function drawHUD() {
   for (let i = 0; i < lives; i++) livesText += '♥ ';
   ctx.fillText(livesText, pad, 60);
 
-  // Weapon Level Stars & Class Info
-  ctx.font = '9px "Press Start 2P"';
-  ctx.fillStyle = '#ffdd00';
-  ctx.shadowColor = '#ffdd00';
+  // Active Signature Weapon Badge & Level Stars
+  ctx.font = '8px "Press Start 2P"';
+  ctx.fillStyle = wProfile.color;
+  ctx.shadowColor = wProfile.color;
   let starsText = '';
   for (let s = 0; s < player.weaponLevel; s++) starsText += '★';
-  ctx.fillText(`WEAPON LV.${player.weaponLevel} ${starsText}`, pad, 80);
+  ctx.fillText(`${wProfile.icon} ${wProfile.name} LV.${player.weaponLevel} ${starsText}`, pad, 78);
 
-  // Level & Wave Info (Right side)
+  // Level & Wave Info
   ctx.font = '10px "Press Start 2P"';
   ctx.fillStyle = levelConfig ? levelConfig.color : '#ffdd00';
   ctx.shadowColor = ctx.fillStyle;
@@ -578,7 +571,7 @@ function gameLoop() {
 
   if (gameState === 'playing') {
     updatePlayer(keys, canvas.width, canvas.height);
-    updateLasers(canvas.width, canvas.height, enemies, boss);
+    updateLasers(canvas.width, canvas.height, enemies, boss, player.x + player.width / 2, player.y);
     updateEnemies(canvas.width, canvas.height, player.x + player.width / 2, player.y);
     updateBoss(canvas.width, canvas.height, player.x + player.width / 2, player.y);
     updateWavesDirector();

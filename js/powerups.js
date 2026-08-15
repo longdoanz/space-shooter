@@ -1,11 +1,15 @@
 /* =====================================================
-   ⭐ POWER-UPS & CAPSULES MODULE (js/powerups.js)
-   Spawns floating power-ups including:
-   - ⭐ WEAPON UPGRADE (Permanently levels up your weapons Lv1→Lv5!)
-   - ⚡ CLASS MODULE (Switch between ship characters in battle!)
-   - 🛡️ SHIELD FORCEFIELD
-   - ⚡ SPEED BOOST
-   - ❤️ EXTRA LIFE
+   ⭐ POWER-UPS & WEAPON REWARDS MODULE (js/powerups.js)
+   Rewards:
+   - [P] Plasma Vulcan Weapon Capsule
+   - [L] Tesla Lightning Weapon Capsule
+   - [R] Antimatter Rocket Weapon Capsule
+   - [Q] Quantum Death Ray Weapon Capsule
+   - [V] Vortex Razor Blade Weapon Capsule
+   - [★] Weapon Level Upgrade (+1 Tier!)
+   - [🛡️] Shield Forcefield
+   - [❤️] Extra Heart
+   - [⚡] Speed Boost
    ===================================================== */
 
 'use strict';
@@ -13,18 +17,27 @@
 let powerups = [];
 
 const POWERUP_TYPES = [
-  { id: 'weapon', name: 'WEAPON UPGRADE!', color: '#ffea00', symbol: '⭐' },
-  { id: 'weapon', name: 'WEAPON UPGRADE!', color: '#ffea00', symbol: '⭐' }, // Higher weight
-  { id: 'shield', name: 'SHIELD!',         color: '#00ffff', symbol: '🛡️' },
-  { id: 'speed',  name: 'SPEED BOOST!',    color: '#ff9900', symbol: '⚡' },
-  { id: 'life',   name: 'EXTRA LIFE!',     color: '#ff3366', symbol: '❤️' },
-  { id: 'class',  name: 'CLASS MODULE!',   color: '#00ff88', symbol: '💠' },
+  // ⭐ Level Upgrade
+  { id: 'upgrade',          name: 'WEAPON UPGRADE!',   color: '#ffea00', symbol: '★', isWeapon: false },
+  { id: 'upgrade',          name: 'WEAPON UPGRADE!',   color: '#ffea00', symbol: '★', isWeapon: false },
+
+  // 🔫 Weapon Switch Capsules!
+  { id: 'weapon_plasma',    name: 'PLASMA VULCAN!',    color: '#00eaff', symbol: 'P', isWeapon: true, weaponType: 'plasma' },
+  { id: 'weapon_homing',    name: 'TESLA LIGHTNING!',  color: '#ffdd00', symbol: 'L', isWeapon: true, weaponType: 'homing' },
+  { id: 'weapon_explosive', name: 'ANTIMATTER BOMB!',  color: '#ff3344', symbol: 'R', isWeapon: true, weaponType: 'explosive' },
+  { id: 'weapon_piercing',  name: 'QUANTUM DEATH RAY!',color: '#00ff88', symbol: 'Q', isWeapon: true, weaponType: 'piercing' },
+  { id: 'weapon_vortex',    name: 'VORTEX RAZOR!',     color: '#a020f0', symbol: 'V', isWeapon: true, weaponType: 'vortex' },
+
+  // 🛡️ Defenses & Utility
+  { id: 'shield',           name: 'SHIELD ACTIVE!',    color: '#00ffff', symbol: '🛡️', isWeapon: false },
+  { id: 'life',             name: 'EXTRA HEART!',      color: '#ff3366', symbol: '❤️', isWeapon: false },
+  { id: 'speed',            name: 'SPEED OVERDRIVE!',  color: '#ff9900', symbol: '⚡', isWeapon: false },
 ];
 
-function maybeDropPowerup(x, y, force = false, specificType = null) {
-  if (force || Math.random() < 0.35) {
-    const selected = specificType 
-      ? POWERUP_TYPES.find(p => p.id === specificType) || POWERUP_TYPES[0]
+function maybeDropPowerup(x, y, force = false, specificId = null) {
+  if (force || Math.random() < 0.38) {
+    const selected = specificId 
+      ? POWERUP_TYPES.find(p => p.id === specificId) || POWERUP_TYPES[0]
       : POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
 
     powerups.push({
@@ -32,10 +45,12 @@ function maybeDropPowerup(x, y, force = false, specificType = null) {
       name: selected.name,
       color: selected.color,
       symbol: selected.symbol,
+      isWeapon: selected.isWeapon,
+      weaponType: selected.weaponType || null,
       x: x,
       y: y,
-      width: 28,
-      height: 28,
+      width: 30,
+      height: 30,
       speedY: 1.3,
       bobTimer: Math.random() * 10,
     });
@@ -60,21 +75,31 @@ function drawPowerups(ctx) {
     const cx = p.x + p.width / 2;
     const cy = p.y + p.height / 2 + Math.sin(p.bobTimer) * 3;
 
-    ctx.shadowBlur = 14;
+    ctx.shadowBlur = 16;
     ctx.shadowColor = p.color;
 
+    // Glowing Pill / Capsule
     ctx.beginPath();
-    ctx.arc(cx, cy, 14, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(8, 16, 32, 0.9)';
+    ctx.arc(cx, cy, 15, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(6, 12, 28, 0.92)';
     ctx.strokeStyle = p.color;
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2.8;
     ctx.fill();
     ctx.stroke();
 
-    ctx.font = '13px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(p.symbol, cx, cy + 1);
+    // Icon / Letter inside capsule
+    if (p.isWeapon) {
+      ctx.font = 'bold 12px "Press Start 2P", monospace';
+      ctx.fillStyle = p.color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(p.symbol, cx, cy + 1);
+    } else {
+      ctx.font = '13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(p.symbol, cx, cy + 1);
+    }
 
     ctx.restore();
   }
