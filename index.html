@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🚀 Retro Space Shooter</title>
+  <meta name="description" content="A retro 2D space shooter game with multi-level campaigns, boss fights, permanent weapon upgrades, and character classes!" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Audio Mute / Unmute Button -->
+  <button id="muteBtn" class="sound-toggle" title="Toggle Sound / Music">🔊</button>
+
+  <!-- 
+    🎮 THE GAME CANVAS CONTAINER
+  -->
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 1. Start Screen -->
+    <div id="start-screen" class="screen">
+      <h1>🚀 SPACE SHOOTER</h1>
+      <p class="subtitle">CHOOSE YOUR SHIP CLASS</p>
+      
+      <!-- Character / Ship Class Picker -->
+      <div id="ship-selector" class="ship-grid">
+        <button class="ship-card active" data-class="striker">
+          <span class="ship-icon">🚀</span>
+          <span class="ship-name">STRIKER</span>
+          <span class="ship-spec">Plasma Vulcan</span>
+        </button>
+        <button class="ship-card" data-class="phantom">
+          <span class="ship-icon">⚡</span>
+          <span class="ship-name">PHANTOM</span>
+          <span class="ship-spec">Homing Lightning</span>
+        </button>
+        <button class="ship-card" data-class="destroyer">
+          <span class="ship-icon">💥</span>
+          <span class="ship-name">DESTROYER</span>
+          <span class="ship-spec">Explosive Cannon</span>
+        </button>
+        <button class="ship-card" data-class="valkyrie">
+          <span class="ship-icon">🔮</span>
+          <span class="ship-name">VALKYRIE</span>
+          <span class="ship-spec">Piercing Laser</span>
+        </button>
+      </div>
+
+      <div id="start-high-score" class="high-score-badge">HI-SCORE: 0</div>
+
+      <div class="controls-hint">
+        <p>🕹️ <strong>Move:</strong> Arrow Keys / WASD &nbsp;|&nbsp; 🔫 <strong>Shoot:</strong> SPACE</p>
+        <p>⭐ <strong>Upgrades:</strong> Collect ⭐ to level up your weapon (Lv 1–5)!</p>
+        <p>⚠️ <strong>Warning:</strong> Taking damage decreases weapon by 1 level!</p>
+      </div>
+
+      <button id="startBtn" class="big-button">▶ LAUNCH MISSION</button>
+    </div>
+
+    <!-- 2. Game Over Screen -->
+    <div id="game-over-screen" class="screen hidden">
+      <h1 style="color: #ff3366; text-shadow: 0 0 10px #ff3366, 0 0 30px rgba(255, 51, 102, 0.6);">GAME OVER</h1>
+      <p class="subtitle" id="final-score-text">FINAL SCORE: 0</p>
+      <p class="subtitle" id="final-wave-text" style="color: #ffdd00;">REACHED LEVEL 1</p>
+      <button id="restartBtn" class="big-button">🔄 TRY AGAIN</button>
+    </div>
+
+    <!-- 3. Victory Screen (Beat Level 5 Boss!) -->
+    <div id="victory-screen" class="screen hidden">
+      <h1 style="color: #00ff88; text-shadow: 0 0 10px #00ff88, 0 0 30px rgba(0, 255, 136, 0.6);">🏆 VICTORY!</h1>
+      <p class="subtitle" style="color: #ffea00;">DREADNOUGHT OMEGA DESTROYED!</p>
+      <p class="subtitle" id="victory-score-text">FINAL SCORE: 0</p>
+      <p class="subtitle" id="victory-high-score-text" style="color: #00eaff;">ALL-TIME BEST: 0</p>
+      <button id="victoryBtn" class="big-button">🚀 HYPER OVERDRIVE (NEW GAME+)</button>
+    </div>
+  </div>
+
+  <!-- Mobile On-Screen Buttons -->
+  <div id="mobile-controls">
+    <div class="mobile-row">
+      <button class="ctrl-btn" id="btnUp">▲</button>
+    </div>
+    <div class="mobile-row">
+      <button class="ctrl-btn" id="btnLeft">◀</button>
+      <button class="ctrl-btn shoot-btn" id="btnShoot">🔥</button>
+      <button class="ctrl-btn" id="btnRight">▶</button>
+    </div>
+    <div class="mobile-row">
+      <button class="ctrl-btn" id="btnDown">▼</button>
+    </div>
+  </div>
+
+  <!-- Modular Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/stars.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/lasers.js"></script>
+  <script src="js/powerups.js"></script>
+  <script src="js/ships.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/enemies.js"></script>
+  <script src="js/boss.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

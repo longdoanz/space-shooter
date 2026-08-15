@@ -1,0 +1,268 @@
+/* =====================================================
+   🎮 SPACE SHOOTER — Stylesheet
+   This file makes the page look cool, like a real
+   arcade game cabinet!
+   ===================================================== */
+
+/* Import a cool retro font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap');
+
+/* ---------- Reset & Base ---------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #000010; /* Deep space black */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Orbitron', sans-serif;
+  overflow: hidden; /* No scrollbars — it's a game! */
+  user-select: none; /* Don't let text get accidentally selected */
+}
+
+/* Sound Toggle Button */
+.sound-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0, 30, 60, 0.7);
+  border: 1px solid rgba(0, 234, 255, 0.4);
+  color: #fff;
+  font-size: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, background 0.2s;
+  box-shadow: 0 0 12px rgba(0, 200, 255, 0.2);
+}
+
+.sound-toggle:hover {
+  transform: scale(1.1);
+  background: rgba(0, 60, 120, 0.9);
+}
+
+/* High Score Badge */
+.high-score-badge {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(10px, 2vw, 13px);
+  color: #ffdd00;
+  text-shadow: 0 0 8px #ffdd00;
+  background: rgba(255, 220, 0, 0.1);
+  border: 1px dashed rgba(255, 220, 0, 0.4);
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+/* ---------- Game Container ---------- */
+#game-container {
+  position: relative; /* So overlay screens can sit on top */
+  border: 2px solid #1a3a5c;
+  box-shadow:
+    0 0 30px rgba(0, 150, 255, 0.3),
+    0 0 60px rgba(0, 80, 200, 0.15);
+  border-radius: 4px;
+}
+
+/* The canvas is our game screen */
+#gameCanvas {
+  display: block;
+  background: #000010;
+}
+
+/* ---------- Overlay Screens ---------- */
+/* This is a "screen" that sits on top of the canvas.
+   We use it for the start screen, game over, etc. */
+.screen {
+  position: absolute;
+  inset: 0; /* Covers the entire canvas */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: rgba(0, 0, 20, 0.88);
+  backdrop-filter: blur(2px);
+  padding: 24px;
+  text-align: center;
+}
+
+/* Hidden class — JavaScript adds/removes this */
+.screen.hidden {
+  display: none;
+}
+
+/* ---------- Typography ---------- */
+.screen h1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(18px, 4vw, 36px);
+  color: #00eaff;
+  text-shadow:
+    0 0 10px #00eaff,
+    0 0 30px rgba(0, 234, 255, 0.5);
+  letter-spacing: 4px;
+  line-height: 1.4;
+}
+
+.screen .subtitle {
+  font-size: clamp(10px, 2vw, 14px);
+  color: #7a9cbf;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+/* ---------- Character / Ship Class Selector ---------- */
+.ship-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 440px;
+}
+
+.ship-card {
+  background: rgba(10, 25, 50, 0.7);
+  border: 2px solid rgba(0, 150, 255, 0.35);
+  border-radius: 8px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #fff;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.ship-card:hover {
+  transform: translateY(-2px);
+  border-color: #00eaff;
+  background: rgba(0, 80, 160, 0.4);
+  box-shadow: 0 0 15px rgba(0, 234, 255, 0.4);
+}
+
+.ship-card.active {
+  border-color: #00ff88;
+  background: rgba(0, 180, 100, 0.25);
+  box-shadow: 0 0 18px rgba(0, 255, 136, 0.5);
+}
+
+.ship-icon {
+  font-size: 20px;
+}
+
+.ship-name {
+  font-size: 9px;
+  color: #00eaff;
+  letter-spacing: 1px;
+}
+
+.ship-card.active .ship-name {
+  color: #00ff88;
+}
+
+.ship-spec {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  color: #99bbdd;
+  letter-spacing: 0.5px;
+}
+
+/* ---------- Controls Hint ---------- */
+.controls-hint {
+  background: rgba(0, 100, 200, 0.15);
+  border: 1px solid rgba(0, 150, 255, 0.3);
+  border-radius: 8px;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.controls-hint p {
+  font-size: clamp(9px, 1.5vw, 12px);
+  color: #a0c4e8;
+  letter-spacing: 1px;
+}
+
+/* ---------- Buttons ---------- */
+.big-button {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(11px, 2vw, 15px);
+  color: #000;
+  background: linear-gradient(135deg, #00eaff 0%, #0080ff 100%);
+  border: none;
+  border-radius: 6px;
+  padding: 14px 32px;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 20px rgba(0, 200, 255, 0.5);
+}
+
+.big-button:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 8px 30px rgba(0, 200, 255, 0.7);
+}
+
+.big-button:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+/* ---------- Mobile Controls ---------- */
+#mobile-controls {
+  display: none; /* Hidden by default — shown on small screens */
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.mobile-row {
+  display: flex;
+  gap: 6px;
+}
+
+.ctrl-btn {
+  width: 56px;
+  height: 56px;
+  background: rgba(0, 100, 200, 0.3);
+  border: 2px solid rgba(0, 150, 255, 0.5);
+  border-radius: 10px;
+  color: #00eaff;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.1s;
+  touch-action: none;
+}
+
+.ctrl-btn:active, .ctrl-btn.pressed {
+  background: rgba(0, 200, 255, 0.4);
+}
+
+.shoot-btn {
+  width: 70px;
+  background: rgba(255, 50, 50, 0.3);
+  border-color: rgba(255, 100, 100, 0.5);
+}
+
+/* Show mobile controls on small/touch screens */
+@media (max-width: 600px), (pointer: coarse) {
+  #mobile-controls {
+    display: flex;
+  }
+  .controls-hint p:last-child {
+    display: none; /* Hide the mobile hint — they can see the buttons! */
+  }
+}
